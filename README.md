@@ -42,10 +42,47 @@ node('hello world'): Node<String> -> node(522): Node<u32> -> node(12.34): Node<f
 ``` 
 I have searched the net and there was almost no resource on dynamic-typed LinkedList, which means this could be a good practice.
 
+## The Approach that Worked
+After a few tries (which you can read below), the dynamic-typed LinkedList was finally implemented. The solution turns out to be quite straightforward if you happen to know of the `Any` trait in `std::any::Any`. I had originally thought of a similar idea which is to implement a `Data` trait for the field `data`, that will make the struct `Node` purely 'ungeneric', but I had encounter some issues with trait object-safety due to the methods defined associated with the `Next` and `Data` traits. Happy to know that `Any` trait is implemented for almost all primitive traits in the standard library.
+
+struct definitions:
+```rust
+struct Node {
+    data: Box<dyn Any>,
+    next: Option<Rc<RefCell<Node>>>,
+}
+
+struct DynLinkedList {
+    head: Option<Rc<RefCell<Node>>>,
+    tail: Option<Rc<RefCell<Node>>>,
+    size: u32,
+}
+```
+With these structs, you can implemented methods for them which are almost exactly as that with static-typed LinkedList.
+```rust
+// example for DynLinkedList's append() method
+
+pub fn append(&mut self, node: Node) {
+    let wrapped_node = node.into_wrapped(); // wrapped_node: Rc<RefCell<Node>>
+    self.tail.take().map_or_else(
+        || self.head = Some(wrapped_node.clone()),
+        |old_tail| old_tail.borrow_mut().set_wrapped_next(wrapped_node.clone()),
+    ); // set_wrapped_next makes self.tail.next = wrapped_node
+    self.tail = Some(wrapped_node);
+    self.size += 1;
+    }
+```
+## The Approaches that did not succeed
+Not that these approaches would not work, but more of I didn't make these approaches work in the end. These might work eventually with more time invested and research.
+
 ### First Try
 My first implementation was a disaster.
 
-Tried to have two generic types `<T, U>` and a `pub trait Next` in the implementation of `Node<T, U>`. Soon, I realize that the implementation of `struct DynLinkedList` will be locked to these two generic types and there would be no possibility of say, linking two nodes of the same type consecutively. I have even tried consuming the `DynLinkedList<T, U>` to return say, `DynLinkedList<V, U>`: changing the head. Gave up on this first approach for the second.
+Tried to have two generic types `<T, U>` and a `pub trait Next` in the implementation of `Node<T, U>`. Soon, I realize that the implementation of `struct DynLinkedList` will be locked to these two generic types and there would be no possibility of say, linking two nodes of the same type consecutively. I have even tried consuming the `DynLinkedList<T, U>` to return say, `DynLinkedList<V, U>`: changing the head. As the return type of functions must be known during compile time, I have to turn to traits and written a trait `DynLinkedListTrait` to be able to write
+```rust
+fn func_name(func_param: func_param_type) -> impl DynLinkedListTrait
+```
+After some time, I gave up on this first approach for the second.
 
 ### Second Go
 Again, a disaster (maybe not).
@@ -71,3 +108,38 @@ pub trait CanNext {
 }
 ```
 So we leave the 'ability' to go 'next' to the `next_obj` field of `Node<T>` instead of giving it to `Node<T>` itself.
+
+Like this:
+![](./images/dynll_approach_two_diag.png)
+
+Still it faces problem when implementing the method `append(&mut self)` for `LinkedList<T, U>`.
+
+```rust
+// impl<T, U> DynLinkedList<T, U> { ...
+pub fn append<P: Any>(&mut self, node: Node<P>) -> impl DynLLTrait {
+    if let Some(old_tail) = self.tail.take() {
+        let wrapped_node = node.into_wrapped();
+        let old_tail = &mut *old_tail.borrow_mut();
+        old_tail.set_next(wrapped_node.clone());
+
+        return DynLinkedListDiffTypes {
+          head: self.head.take(),
+          tail: Some(wrapped_node),
+          kind: SameOrDifferentType::DifferentType,
+        }
+        
+      }
+    DynLinkedListDiffTypes::<T, U>::new_with_node(node)
+    }
+...
+```
+
+We are simply not allowed to change head of type Option containing something of type `Node<T>` to that of type `Node<P>` when appending to an empty `DynLinkedList`. You can find the implementation of this unsuccessful approach in `dyn_ll_idea_two.rs`.
+
+## Main Problem with using Generics
+I guess the main problem with using generic types to implement dynamic-typed LinkedList is: with the setting of the next node for the tail in that LinkedList, this mutates that LinkedList to a different type. Even with implementing marked trait which I call as `DynLLTrait` and using enums, this approach still does not work for me. You can find the implementation in `dyn_ll_enum.rs`.
+
+# Good things about Rust
+I guess this has been a fruitful exercise that spans a few days. Rust is a difficult language to learn. According to [Ryan Levick](https://github.com/rylev), Rust is a "low-level system programming language" with some ideas borrowed from functional programming languages and indeed it is. However, Rust is touted as a very safe, secure, reliable and performant language. One recent example of this is [Discord's switch from Go to Rust](https://discord.com/blog/why-discord-is-switching-from-go-to-rust).
+
+From my readings, I think Rust finds its best successes in blockchain applications, for instance, the highest TPS Layer1 blockchain, Solana, is implemented in Rust. Upcoming [Radix's Scrypto](https://learn.radixdlt.com/article/what-is-scrypto) and the much-anticipated [Sui](https://sui.io/) are also implemented in Rust. Furthermore, the Move language (and its dialects: Aptos, Starcoin and Sui Move) used in smart contracts are compiled, and its syntax is inspired, by Rust.
