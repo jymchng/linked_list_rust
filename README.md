@@ -42,6 +42,17 @@ node('hello world'): Node<String> -> node(522): Node<u32> -> node(12.34): Node<f
 ``` 
 I have searched the net and there was almost no resource on dynamic-typed LinkedList, which means this could be a good practice.
 
+## Approaches
+Table summarizes the modules which contains the successful and unsuccessful approaches.
+
+| Unsuccessful       | Successful                  |
+|--------------------|-----------------------------|
+| node_traits.rs     | dynamic_type_linked_list.rs |
+| dyn_ll_enum.rs     | same_type_linked_list.rs    |
+| dyn_ll_idea_two.rs |                             |
+|
+
+
 ## The Approach that Worked
 After a few tries (which you can read below), the dynamic-typed LinkedList was finally implemented. The solution turns out to be quite straightforward if you happen to know of the `Any` trait in `std::any::Any`. I had originally thought of a similar idea which is to implement a `Data` trait for the field `data`, that will make the struct `Node` purely 'ungeneric', but I had encounter some issues with trait object-safety due to the methods defined associated with the `Next` and `Data` traits. Happy to know that `Any` trait is implemented for almost all primitive traits in the standard library.
 
