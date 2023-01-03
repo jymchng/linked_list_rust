@@ -91,7 +91,7 @@ impl<T, U> DynLinkedList<T, U> {
             Some(old_tail) => {
                 let wrapped_node = node.into_wrapped();
                 let old_tail = &mut *old_tail.borrow_mut();
-                old_tail.borrow_mut().set_next(wrapped_node.clone());
+                old_tail.next_obj.set_next(wrapped_node.clone());
                 DynLinkedList {
                     head: self.head.take(),
                     tail: Some(wrapped_node),

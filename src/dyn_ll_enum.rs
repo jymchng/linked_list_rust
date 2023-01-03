@@ -53,12 +53,12 @@ impl<T, U> DynLinkedListDiffTypes<T, U> {
         }
     }
 
-    pub fn new_with_node(first_node: Node<T>) -> Self {
+    pub fn new_with_node<Q>(first_node: Node<Q>) -> DynLinkedListSameTypes<Q> {
         let wrapped_first_node = first_node.into_wrapped();
-        DynLinkedListDiffTypes::<T, U> {
+        DynLinkedListSameTypes::<Q> {
             head: Some(wrapped_first_node.clone()),
-            tail: None::<Rc<RefCell<Node<U>>>>,
-            kind: SameOrDifferentType::DifferentType,
+            tail: None::<Rc<RefCell<Node<Q>>>>,
+            kind: SameOrDifferentType::SameType,
         }
     }
 
@@ -74,7 +74,7 @@ impl<T, U> DynLinkedListDiffTypes<T, U> {
                 kind: SameOrDifferentType::DifferentType,
             });
         }
-        DynLinkedList::<P, U>::DiffTypes(DynLinkedListDiffTypes::<P, U>::new_with_node(node))
+        DynLinkedList::<P, U>::SameTypes(DynLinkedListDiffTypes::<P, U>::new_with_node::<P>(node))
     }
 }
 
