@@ -84,7 +84,7 @@ pub enum SameOrDifferentType {
 }
 
 pub trait DynLLTrait {
-    fn is_dll() -> bool {
+    fn is_dll() -> bool  {
         true
     }
 }

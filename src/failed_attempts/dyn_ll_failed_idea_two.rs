@@ -1,6 +1,6 @@
 #![allow(dead_code, unused)]
 
-use crate::node_traits::{Data, Linkable, Next};
+use crate::dyn_ll_failed_idea_one_node_traits::{Data, Linkable, Next};
 use std::cell::{Ref, RefCell, RefMut};
 use std::fmt::Debug;
 use std::rc::Rc;

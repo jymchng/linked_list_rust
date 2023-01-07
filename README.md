@@ -47,9 +47,10 @@ Table summarizes the modules which contains the successful and unsuccessful appr
 
 | Unsuccessful       | Successful                  |
 |--------------------|-----------------------------|
-| node_traits.rs     | dynamic_type_linked_list.rs |
-| dyn_ll_enum.rs     | same_type_linked_list.rs    |
-| dyn_ll_idea_two.rs |                             |
+| dyn_ll_failed_idea_one_node_traits.rs     | dynamic_type_linked_list.rs |
+| dyn_ll_failed_idea_one.rs     | same_type_linked_list.rs    |
+| dyn_ll_failed_idea_two.rs |                             |
+|dyn_ll_failed_idea_three.rs||
 
 ## The Approach that Worked
 After a few tries (which you can read below), the dynamic-typed LinkedList was finally implemented. The solution turns out to be quite straightforward if you happen to know of the `Any` trait in `std::any::Any`. I had originally thought of a similar idea which is to implement a `Data` trait for the field `data`, that will make the struct `Node` purely 'ungeneric', but I had encounter some issues with trait object-safety due to the methods defined associated with the `Next` and `Data` traits. Happy to know that `Any` trait is implemented for almost all primitive traits in the standard library.
@@ -119,7 +120,7 @@ pub trait CanNext {
 So we leave the 'ability' to go 'next' to the `next_obj` field of `Node<T>` instead of giving it to `Node<T>` itself.
 
 Like this:
-![](./images/dynll_approach_two_diag.png)
+![](./images/staticlinkedlisti32.png)
 
 Still it faces problem when implementing the method `append(&mut self)` for `LinkedList<T, U>`.
 
