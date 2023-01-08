@@ -120,7 +120,7 @@ pub trait CanNext {
 So we leave the 'ability' to go 'next' to the `next_obj` field of `Node<T>` instead of giving it to `Node<T>` itself.
 
 Like this:
-![](./images/staticlinkedlisti32.png)
+![](./images/staticlinkedlisti32_final.png)
 
 Still it faces problem when implementing the method `append(&mut self)` for `LinkedList<T, U>`.
 
